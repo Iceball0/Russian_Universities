@@ -110,7 +110,7 @@
             </ion-menu>
             <div id="info">
                 <ion-title color="primary" class="subtitle bold">Основная информация</ion-title>
-                <ion-card class="university-card">
+                <ion-card class="university-card main-info-card">
                     <ion-row>
                         <ion-col class="university-image-col">
                             <img class="university-image" src="{{ url_for('static', filename='images/universities/' + university.image) }}" alt=""/>
@@ -131,7 +131,7 @@
                         </ion-col>
                     </ion-row>
                 </ion-card>
-                <ion-card class="university-card university-description-card">
+                <ion-card class="university-card university-description-card main-description-card">
                     <ion-row>
                         <ion-col class="university-col university-desc-col" id="content">
                             <ion-card-content class="university-desc content-lg">{{ university.description }}</ion-card-content>

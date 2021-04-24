@@ -15,7 +15,7 @@ ion-searchbar {
     margin-bottom: 20px;
 }
 
-body.dark #news-list, body.dark #card-list {
+body.dark #news-list, body.dark #card-list, body.dark .main-description-card, body.dark .main-info-card {
     background-color: #121212;
 }
 

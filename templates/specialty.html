@@ -76,7 +76,7 @@
             </ion-menu>
             <div id="info">
                 <ion-title color="primary" class="subtitle bold">Основная информация</ion-title>
-                <ion-card class="specialty-card">
+                <ion-card class="specialty-card main-info-card">
                     <ion-row>
                         <ion-col class="specialty-image-col specialty-image-col">
                             <img class="specialty-image" src="{{ url_for('static', filename='images/specialties/' + specialty.image) }}" alt=""/>
@@ -89,7 +89,7 @@
                         </ion-col>
                     </ion-row>
                 </ion-card>
-                <ion-card class="specialty-card specialty-description-card">
+                <ion-card class="specialty-card specialty-description-card main-description-card">
                     <ion-row>
                         <ion-col class="specialty-col specialty-desc-col" id="content">
                             <ion-card-content class="specialty-desc content-lg">{{ specialty.description }}</ion-card-content>

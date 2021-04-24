@@ -5,7 +5,7 @@ ion-searchbar {
     margin-bottom: 20px;
 }
 
-body.dark #card-list {
+body.dark #card-list, body.dark .toolbar-searchbar {
     background-color: #121212;
 }
 
