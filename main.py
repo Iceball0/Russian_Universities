@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 from flask_restful import abort, Api
+from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from requests import get
 from sqlalchemy.sql import func
@@ -19,8 +20,10 @@ from commands import create_tables
 # инициализация Flask и login manager
 app = Flask(__name__)
 api = Api(app)
+sess = Session()
+sess.init_app(app)
 app.config['SECRET_KEY'] = 'russian_universities_secret_key_1396'
-app.secret_key = 'russian_universities_secret_key_1396'
+app.secret_key()
 app.config.from_pyfile('settings.py')
 app.cli.add_command(create_tables)
 SQLAlchemy().init_app(app)
