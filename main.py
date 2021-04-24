@@ -34,7 +34,7 @@ def main():
     api.add_resource(universities_api.UniversitiesResource, '/api/universities/<int:university_id>')
 
     # запуск приложения
-    port = int(os.environ.get("PORT",it 5000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
 
 
