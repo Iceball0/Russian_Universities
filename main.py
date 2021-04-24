@@ -383,6 +383,8 @@ def parser(university_id):
         for link in soup.find_all(news.title.split()[0], class_=news.title.split()[1])[:5]:
             titles.append(link.text.strip())
             link2 = link.find('a', href=True)['href']
+            if link2[0] != '/':
+                link2 = f'/{link2}'
             links.append(link2)
 
         for link in soup.find_all(news.image.split()[0], class_=news.image.split()[1])[:5]:
