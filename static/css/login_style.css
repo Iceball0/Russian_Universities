@@ -104,7 +104,7 @@ label {
     font-family: Poppins-Medium;
     width: 100px;
     height: 40px;
-    border-radius: 25px;
+    --border-radius: 25px;
     background-color: white;
     cursor: pointer;
     font-weight: bold;

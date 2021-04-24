@@ -70,7 +70,7 @@ body.dark .modal-list ion-item, body.dark .box {
     position: relative;
     color: white;
     background-color: #3880ff;
-    border-radius: 10px;
+    border-radius: 25px;
     font-size: 1rem;
     font-weight: 700;
     text-overflow: ellipsis;
