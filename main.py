@@ -23,7 +23,6 @@ api = Api(app)
 sess = Session()
 sess.init_app(app)
 app.config['SECRET_KEY'] = 'russian_universities_secret_key_1396'
-app.secret_key()
 app.config.from_pyfile('settings.py')
 app.cli.add_command(create_tables)
 SQLAlchemy().init_app(app)
