@@ -19,7 +19,7 @@ from commands import create_tables
 # инициализация Flask и login manager
 app = Flask(__name__)
 api = Api(app)
-app.config['SECRET_KEY'] = 'ldfjsolasfuasdfjsodfusoij4w09r8pswojufsldkfjdf9'
+app.config['SECRET_KEY'] = 'russian_universities_secret_key_1396'
 app.config.from_pyfile('settings.py')
 app.cli.add_command(create_tables)
 SQLAlchemy().init_app(app)
