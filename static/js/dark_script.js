@@ -111,15 +111,6 @@ if (toggle) {
 // переключение темы в зависимости от темы браузера
 
 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-if (toggle) {
-    if (prefersDark.matches) {
-        toggle.disabled = true;
-    }
-    else {
-        toggle.disabled = false;
-    }
-}
-
 
 prefersDark.addListener((e) => checkToggle(e.matches));
 
@@ -130,11 +121,8 @@ function loadApp() {
 
 
 function checkToggle(shouldCheck) {
-    toggle.checked = shouldCheck;
-    if (shouldCheck) {
-        toggle.disabled = true;
-    } else {
-        toggle.disabled = false;
+    if (!get_cookie('theme')) {
+        toggle.checked = shouldCheck;
     }
 }
 

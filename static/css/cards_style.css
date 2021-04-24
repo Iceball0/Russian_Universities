@@ -15,8 +15,9 @@ body.dark .edit-button-icon, body.dark .delete-button-icon,  body.dark .add-butt
 
 .edit-button, .delete-button, .add-button {
     width: 50px;
-    height: 40px;
+    height: 50px;
     margin-left: 40px;
+    --border-radius: 25px !important;
 }
 
 .delete-button {
@@ -198,11 +199,16 @@ body.dark .edit-button-icon, body.dark .delete-button-icon,  body.dark .add-butt
 
     .edit-button {
         margin: 0;
+        --border-radius: 25px !important;
     }
     .delete-button {
         margin-right: 0;
         margin-top: 0;
         margin-bottom: 0;
+        --border-radius: 25px !important;
+    }
+    .add-button {
+        --border-radius: 25px !important;
     }
     
     ion-title {

@@ -79,6 +79,7 @@ body.dark .edit-button-icon, body.dark .add-button-icon, body.dark .edit-button 
     margin-bottom: 20px;
     height: 40px;
     margin-left: 40px;
+    --border-radius: 25px;
 }
 
 .add-button {
@@ -191,7 +192,7 @@ body.dark .edit-button-icon, body.dark .add-button-icon, body.dark .edit-button 
 
 .news-all-button {
     color: white;
-    border-radius: 10px;
+    --border-radius: 25px;
     width: 70%;
     left: 50%;
     transform: translate(-50%, 0);
@@ -366,16 +367,29 @@ body.dark .edit-button-icon, body.dark .add-button-icon, body.dark .edit-button 
         left: 50%;
         transform: translate(-50%, 0);
         margin-left: 0;
+        --border-radius: 25px;
     }
 }
 
 @media screen and (max-width: 520px) {
     .news-card {
-        width: 200px;
+        width: 300px;
         left: 50%;
         transform: translate(-50%, 0);
         margin-left: 0;
         margin-right: 0;
+    }
+    .news-card-image {
+        height: 300px;
+        width: 300px;
+        object-fit: cover;
+    }
+    .news-card-image-col {
+        height: 300px;
+        width: 300px;
+        flex: 0 0 300px;
+        padding: 0;
+        margin-right: 10px;
     }
 }
 
