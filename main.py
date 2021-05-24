@@ -182,7 +182,6 @@ def university(university_id):
                     Universities_Specialties.university_id == university_id,
                     Universities_Specialties.specialty_id == i[0] + 1).first()
                 if i[1]:
-                    print(i)
                     if not connection:
                         connection = Universities_Specialties()
                         connection.university_id = university_id
@@ -494,8 +493,7 @@ def parser(university_id):
         return news_li
 
     # в случае возникновения неполадок, отправляем пустой массив
-    except Exception as e:
-        print(e)
+    except Exception:
         return []
 
 
