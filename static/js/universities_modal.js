@@ -2,16 +2,19 @@
 
 customElements.define('modal-page', class ModalContent extends HTMLElement {
     connectedCallback() {
-        // изменения в форме в зависимости от цели использования (добавление/редактирование) 
-        if (edit_mode == 'add') {
-            var mod_title = 'Добавление вуза';
-            var but_name = 'add-submit';
-            var required = 'required';
+        // изменения в форме в зависимости от цели использования (добавление/редактирование)
+        let mod_title;
+        let but_name;
+        let required;
+        if (edit_mode === 'add') {
+            mod_title = 'Добавление вуза';
+            but_name = 'add-submit';
+            required = 'required';
         }
         else {
-            var mod_title = 'Редактирование вуза';
-            var but_name = 'edit-submit';
-            var required = '';
+            mod_title = 'Редактирование вуза';
+            but_name = 'edit-submit';
+            required = '';
         }
         this.innerHTML = `
             <ion-header translucent>
@@ -36,7 +39,7 @@ customElements.define('modal-page', class ModalContent extends HTMLElement {
                         </ion-item>
                         <ion-item>
                             <ion-label position="floating">Топ в России</ion-label>
-                            <ion-input id="TopInRussia" name="TopInRussia" placeholder="Введите место по России" type="number" required></ion-input>
+                            <ion-input id="TopInRussia" name="TopInRussia" placeholder="Введите место по России" type="number" min="0" required></ion-input>
                         </ion-item>
                         <ion-item>
                             <ion-label position="floating">Описание</ion-label>
@@ -94,24 +97,23 @@ function dismissModal() {
     if (currentModal) {
         currentModal.dismiss().then(() => { currentModal = null; });
         setTimeout(() => { pause = false; }, 500);
-        
     }
 }
 
 // значения для авто заполнения полей по умолчанию
 
-var id = '';
-var title = '';
-var city = '';
-var TopInRussia = '';
-var description = '';
+let id = '';
+let title = '';
+let city = '';
+let TopInRussia = '';
+let description = '';
 
 // отображение формы по нажатию на одну из кнопок "редактировать" и определение нажатой кнопки
 
-var edit_buttons = document.getElementsByClassName('edit-button');
-for(var j = 0; j < edit_buttons.length; j++)
+const edit_buttons = document.getElementsByClassName('edit-button');
+for (let j = 0; j < edit_buttons.length; j++) {
 
-    edit_buttons[j].onclick = function (){
+    edit_buttons[j].onclick = function() {
 
         // значения для авто заполнения в зависимости от нажатой кнопки
         id = ids[this.getAttribute("name") - 1];
@@ -123,6 +125,8 @@ for(var j = 0; j < edit_buttons.length; j++)
         presentModal();
 
     }
+
+}
 
 document.documentElement.style.setProperty('--effect-width', '210px');
 let i = setInterval(function() {

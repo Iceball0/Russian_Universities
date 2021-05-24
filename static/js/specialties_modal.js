@@ -2,16 +2,19 @@
 
 customElements.define('modal-page', class ModalContent extends HTMLElement {
     connectedCallback() {
-        // изменения в форме в зависимости от цели использования (добавление/редактирование) 
-        if (edit_mode == 'add') {
-            var mod_title = 'Добавление направления';
-            var but_name = 'add-submit';
-            var required = 'required';
+        // изменения в форме в зависимости от цели использования (добавление/редактирование)
+        let mod_title;
+        let but_name;
+        let required;
+        if (edit_mode === 'add') {
+            mod_title = 'Добавление направления';
+            but_name = 'add-submit';
+            required = 'required';
         }
         else {
-            var mod_title = 'Редактирование направления';
-            var but_name = 'edit-submit';
-            var required = '';
+            mod_title = 'Редактирование направления';
+            but_name = 'edit-submit';
+            required = '';
         }
         this.innerHTML = `
             <ion-header translucent>
@@ -96,15 +99,15 @@ function dismissModal() {
 
 // значения для авто заполнения полей по умолчанию
 
-var id = '';
-var title = '';
-var code = '';
-var description = '';
+let id = '';
+let title = '';
+let code = '';
+let description = '';
 
 // отображение формы по нажатию на одну из кнопок "редактировать" и определение нажатой кнопки
 
-var edit_buttons = document.getElementsByClassName('edit-button');
-for(var j = 0; j < edit_buttons.length; j++)
+const edit_buttons = document.getElementsByClassName('edit-button');
+for (let j = 0; j < edit_buttons.length; j++)
 
     edit_buttons[j].onclick = function (){
 

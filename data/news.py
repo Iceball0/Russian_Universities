@@ -10,7 +10,9 @@ class News(SqlAlchemyBase, SerializerMixin):
     university_id = sqlalchemy.Column(sqlalchemy.Integer,
                                       sqlalchemy.ForeignKey("universities.id"), primary_key=True)
     url = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
+    block = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     title = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     image = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     text = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     date = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
+    news_url = sqlalchemy.Column(sqlalchemy.Text, nullable=False)

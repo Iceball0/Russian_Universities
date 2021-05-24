@@ -109,4 +109,8 @@ body.dark .modal-list ion-item, body.dark .box {
     .modal-wrapper {
         border-radius: 0 !important;
     }
+
+    .native-textarea {
+        height: 150px !important;
+    }
 }

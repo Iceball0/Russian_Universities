@@ -1,8 +1,5 @@
 ion-searchbar {
-    margin-left: 40px;
-    margin-right: 40px;
-    margin-top: 40px;
-    margin-bottom: 20px;
+    margin: 40px 40px 20px;
 }
 
 body.dark #card-list, body.dark .toolbar-searchbar {
@@ -38,9 +35,7 @@ body.dark .edit-button-icon, body.dark .delete-button-icon,  body.dark .add-butt
 }
 
 .subtitle {
-    margin: 40px;
-    margin-top: 40px;
-    margin-bottom: 0px;
+    margin: 40px 40px 0;
 }
 
 .bold {
@@ -53,15 +48,12 @@ body.dark .edit-button-icon, body.dark .delete-button-icon,  body.dark .add-butt
 
 .card {
     border-radius: 24px;
-    margin-left: 40px;
-    margin-right: 40px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin: 20px 40px;
     height: 300px;
 }
 
 .card.dark, #searchbar.dark .searchbar-input {
-    box-shadow: rgb(255 255 255) 0px 1px 5px 0px;
+    box-shadow: rgb(255 255 255) 0 1px 5px 0;
     animation: pulse 2s infinite;
 }
 
@@ -94,7 +86,7 @@ body.dark .edit-button-icon, body.dark .delete-button-icon,  body.dark .add-butt
 }
 
 .card-header {
-    padding-bottom: 0px;
+    padding-bottom: 0;
 }
 
 .university-info-row {
@@ -125,13 +117,13 @@ body.dark .edit-button-icon, body.dark .delete-button-icon,  body.dark .add-butt
 
 @keyframes pulse {
     0% {
-        box-shadow: rgb(255 255 255) 0px 1px 5px 0px;
+        box-shadow: rgb(255 255 255) 0 1px 5px 0;
     }
     50% {
-        box-shadow: rgb(255 255 255 / 40%) 0px 1px 5px 0px;
+        box-shadow: rgb(255 255 255 / 40%) 0 1px 5px 0;
     }
     100% {
-        box-shadow: rgb(255 255 255) 0px 1px 5px 0px;
+        box-shadow: rgb(255 255 255) 0 1px 5px 0;
     }
 }
 

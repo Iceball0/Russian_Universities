@@ -2,7 +2,7 @@
 <html lang="ru">
 
 <head>
-    <title>Специальности</title>
+    <title>Специальности | Вузы России</title>
 
     <!--Meta tags-->
     <meta charset="utf-8">
@@ -46,6 +46,8 @@
                         <ion-button fill="clear" class="menu-item" name="disabled" href="/specialties">НАПРАВЛЕНИЯ</ion-button>
                         {% if current_user.is_authenticated %}
                         <ion-button color="medium" fill="clear" class="exit" href="/logout">Выйти</ion-button>
+                        {% else %}
+                        <ion-button color="medium" fill="clear" class="enter" href="/login">Войти</ion-button>
                         {% endif %}
                     </ion-col>
                 </ion-row>
@@ -107,10 +109,10 @@
     </ion-app>
     <script>
         document.getElementsByName("disabled")[0].style.pointerEvents = 'none';
-        var ids = '{{ specialties|map(attribute="id")|join("; ") }}'.split('; ');
-        var titles = '{{ specialties|map(attribute="name")|join("; ") }}'.split('; ');
-        var codes = '{{ specialties|map(attribute="code")|join("; ") }}'.split('; ');
-        var descriptions = '{{ specialties|map(attribute="description")|join("; ") }}'.split('; ');
+        const ids = '{{ specialties|map(attribute="id")|join("; ") }}'.split('; ');
+        const titles = '{{ specialties|map(attribute="name")|join("; ") }}'.split('; ');
+        const codes = '{{ specialties|map(attribute="code")|join("; ") }}'.split('; ');
+        const descriptions = '{{ specialties|map(attribute="description")|join("; ") }}'.split('; ');
     </script>
     <script src="{{ url_for('static', filename='js/dark_script.js') }}"></script>
     <script src="{{ url_for('static', filename='js/searchbar_script.js') }}"></script>

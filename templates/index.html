@@ -46,6 +46,8 @@
                         <ion-button color="medium" fill="clear" class="menu-item" href="/specialties">НАПРАВЛЕНИЯ</ion-button>
                         {% if current_user.is_authenticated %}
                         <ion-button color="medium" fill="clear" class="exit" href="/logout">Выйти</ion-button>
+                        {% else %}
+                        <ion-button color="medium" fill="clear" class="enter" href="/login">Войти</ion-button>
                         {% endif %}
                     </ion-col>
                 </ion-row>
@@ -136,11 +138,11 @@
     </ion-app>
     <script>
         document.getElementsByName("disabled")[0].style.pointerEvents = 'none';
-        var ids = '{{ universities|map(attribute="id")|join("; ") }}'.split('; ');
-        var titles = '{{ universities|map(attribute="name")|join("; ") }}'.split('; ');
-        var cities = '{{ universities|map(attribute="city")|join("; ") }}'.split('; ');
-        var TopsInRussia = '{{ universities|map(attribute="placeInRussianTop")|join("; ") }}'.split('; ');
-        var descriptions = '{{ universities|map(attribute="description")|join("; ") }}'.split('; ');
+        const ids = '{{ universities|map(attribute="id")|join("; ") }}'.split('; ');
+        const titles = '{{ universities|map(attribute="name")|join("; ") }}'.split('; ');
+        const cities = '{{ universities|map(attribute="city")|join("; ") }}'.split('; ');
+        const TopsInRussia = '{{ universities|map(attribute="placeInRussianTop")|join("; ") }}'.split('; ');
+        const descriptions = '{{ universities|map(attribute="description")|join("; ") }}'.split('; ');
     </script>
     <script src="{{ url_for('static', filename='js/dark_script.js') }}"></script>
     <script src="{{ url_for('static', filename='js/searchbar_script.js') }}"></script>

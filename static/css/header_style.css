@@ -4,9 +4,10 @@
 
 .menu-col {
     text-align: center;
+    padding: 0 60px;
 }
 
-.exit {
+.exit, .enter {
     font-size: 15px;
     font-weight: bold;
     position: absolute;

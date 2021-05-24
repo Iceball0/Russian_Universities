@@ -35,7 +35,7 @@ def main():
 
     # запуск приложения
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='127.0.0.2', port=port, debug=True)
 
 
 # загрузка аккаунта администратора
@@ -126,17 +126,22 @@ def university(university_id):
             return redirect(f"/universities/{university_id}")
 
         # если запрос был отправлен из формы редактирования новостного раздела
-        if 'edit-submit' in request.form:
+        if 'edit-news-submit' in request.form:
             # получаем данные университета из БД по айди
             news_edit = db_sess.query(News).get(university_id)
 
             # если данные существуют, то редактируем их и сохраняем
             if news_edit:
                 news_edit.url = request.form['url']
+                news_edit.block = request.form['block']
                 news_edit.title = request.form['title']
                 news_edit.image = request.form['image']
-                news_edit.text = request.form['text']
+                if request.form['text'] == '-':
+                    news_edit.text = ''
+                else:
+                    news_edit.text = request.form['text']
                 news_edit.date = request.form['date']
+                news_edit.news_url = request.form['news_url']
                 db_sess.commit()
                 redirect(f'/university/{university_id}')
 
@@ -145,16 +150,22 @@ def university(university_id):
                 news_add = News()
                 news_add.university_id = university_id
                 news_add.url = request.form['url']
+                news_add.block = request.form['block']
                 news_add.title = request.form['title']
                 news_add.image = request.form['image']
+                if request.form['text'] == '-':
+                    news_add.text = ''
+                else:
+                    news_add.text = request.form['text']
                 news_add.text = request.form['text']
                 news_add.date = request.form['date']
+                news_add.news_url = request.form['news_url']
                 db_sess.add(news_add)
                 db_sess.commit()
                 redirect(f'/university/{university_id}')
 
         # если запрос был отправлен из формы добавления отзывов
-        else:
+        elif 'add-submit' in request.form:
             # добавляем отзыв в БД
             review = Reviews()
             review.user_name = request.form['name']
@@ -165,8 +176,38 @@ def university(university_id):
             db_sess.commit()
             redirect(f'/university/{university_id}')
 
+        elif 'edit-specialties-submit' in request.form:
+            for i in enumerate(request.form.getlist('checkbox')):
+                connection = db_sess.query(Universities_Specialties).filter(
+                    Universities_Specialties.university_id == university_id,
+                    Universities_Specialties.specialty_id == i[0] + 1).first()
+                if i[1]:
+                    print(i)
+                    if not connection:
+                        connection = Universities_Specialties()
+                        connection.university_id = university_id
+                        connection.specialty_id = i[0] + 1
+                        db_sess.add(connection)
+                        db_sess.commit()
+                        redirect(f'/university/{university_id}')
+                else:
+                    if connection:
+                        db_sess.delete(connection)
+                        db_sess.commit()
+                        redirect(f'/university/{university_id}')
+
+        elif 'edit-budgetary_places-submit' in request.form:
+            connection = db_sess.query(Universities_Specialties).filter(
+                Universities_Specialties.university_id == university_id,
+                Universities_Specialties.specialty_id == request.form['spec-id']).first()
+            connection.budgetary_places = request.form['budgetary_places']
+            db_sess.commit()
+            redirect(f'/university/{university_id}')
+
     # получем данные университета и его новостей из БД, координаты из api поиска по орг, оценку вуза, и парсим новости
     university = db_sess.query(Universities).get(university_id)
+    all_specialties = db_sess.query(Specialties).all()
+    university_specialties_id = [i.specialties.id for i in university.specialties]
     news_ = db_sess.query(News).get(university_id)
     coordinates = finder(university.name)
     if news_:
@@ -182,7 +223,8 @@ def university(university_id):
         avg = 0
         news_url = ''
     return render_template('university.html', university=university, avg=avg, news=news, news_url=news_url,
-                           coordinates=coordinates, news_data=news_)
+                           coordinates=coordinates, news_data=news_, specialties=all_specialties,
+                           university_specialties_id=university_specialties_id)
 
 
 # загрузка страницы со специальностями
@@ -363,6 +405,26 @@ def delete_spec(spec_id):
     return redirect("/specialties")
 
 
+# удаление отзывов
+@app.route('/delete_review/<int:review_id>', methods=['POST', 'GET'])
+@login_required
+def delete_review(review_id):
+    db_sess = db_session.create_session()
+    review = db_sess.query(Reviews).get(review_id)
+
+    # если отзыв существует то удаляем, иначе вызываем 404
+    if review:
+        university_id = review.university_id
+
+        # подтверждаем удаление
+        db_sess.delete(review)
+        db_sess.commit()
+
+        return redirect(f"/universities/{university_id}")
+    else:
+        abort(404)
+
+
 # парсер новостей
 def parser(university_id):
     # получаем данные для парсера из БД
@@ -380,36 +442,60 @@ def parser(university_id):
         dates = []
         images = []
 
-        for link in soup.find_all(news.title.split()[0], class_=news.title.split()[1])[:5]:
+        for block in soup.find_all(news.block.split()[0], class_=news.block.split()[1])[:5]:
+
+            link = block.find(news.title.split()[0], class_=news.title.split()[1])
             titles.append(link.text.strip())
-            link2 = link.find('a', href=True)['href']
-            if link2[0] != '/':
-                link2 = f'/{link2}'
-            links.append(link2)
 
-        for link in soup.find_all(news.image.split()[0], class_=news.image.split()[1])[:5]:
-            link2 = link.find('img', src=True)['src']
-            images.append(link2)
+            if news.news_url.split()[0] == 'a':
+                link = block.find(news.news_url.split()[0], class_=news.news_url.split()[1], href=True)
+                link2 = link['href']
+                if link2[0] != '/':
+                    link2 = f'/{link2}'
+                links.append(link2)
+            else:
+                link = block.find(news.news_url.split()[0], class_=news.news_url.split()[1])
+                link2 = link.find('a', href=True)['href']
+                if link2[0] != '/':
+                    link2 = f'/{link2}'
+                links.append(link2)
 
-        for link in soup.find_all(news.date.split()[0], class_=news.date.split()[1])[:5]:
+            if len(news.image.split()) == 3:
+                link = block.find(news.image.split()[0], class_=news.image.split()[1], style=True)
+                link2 = link['style'].split("url('")[1][:-2]
+                images.append(link2)
+            else:
+                link = block.find(news.image.split()[0], class_=news.image.split()[1])
+                link2 = link.find('img', src=True)['src']
+                images.append(link2)
+
+            link = block.find(news.date.split()[0], class_=news.date.split()[1])
             dates.append(' '.join(link.text.strip().split()))
 
-        if news.text != '':
-            for link in soup.find_all(news.text.split()[0], class_=news.text.split()[1])[:5]:
+            if news.text != '':
+                link = block.find(news.text.split()[0], class_=news.text.split()[1])
                 texts.append(link.text.strip())
 
         url = news.url.split('/')[:3]
 
         news_li = []
-        for i in range(5):
-            dict1 = {'url': f"{url[0]}//{url[2]}", 'link': links[i], 'title': titles[i], 'image': images[i],
-                     'text': texts[i], 'date': dates[i]}
-            news_li.append(dict1)
+
+        if not texts:
+            for i in range(5):
+                dict1 = {'url': f"{url[0]}//{url[2]}", 'link': links[i], 'title': titles[i], 'image': images[i],
+                         'text': '', 'date': dates[i]}
+                news_li.append(dict1)
+        else:
+            for i in range(5):
+                dict1 = {'url': f"{url[0]}//{url[2]}", 'link': links[i], 'title': titles[i], 'image': images[i],
+                         'text': texts[i], 'date': dates[i]}
+                news_li.append(dict1)
 
         return news_li
 
     # в случае возникновения неполадок, отправляем пустой массив
-    except Exception:
+    except Exception as e:
+        print(e)
         return []
 
 

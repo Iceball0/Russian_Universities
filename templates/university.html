@@ -2,7 +2,7 @@
 <html lang="ru">
 
 <head>
-    <title>{{ university.name }}</title>
+    <title>{{ university.name }} | Вузы России</title>
 
     <!--Meta tags-->
     <meta charset="utf-8">
@@ -32,7 +32,7 @@
     <script type="text/javascript">
         ymaps.ready(init);
         function init(){
-            var myMap = new ymaps.Map("map", {
+            const myMap = new ymaps.Map("map", {
                 center: ['{{ coordinates[1] }}', '{{ coordinates[0] }}'],
                 zoom: 15
             });
@@ -43,7 +43,7 @@
                     preset: 'islands#icon',
                     iconColor: '#0095b6'
                 }))
-        };
+        }
     </script>
 
     <!--Icons-->
@@ -163,17 +163,38 @@
                             </ion-col>
                         </ion-row>
                     </ion-card>
+                    {% if current_user.is_authenticated %}
+                    <ion-button color="success" class="edit-budgetary_places" name="{% if item.budgetary_places %}{{ item.budgetary_places }}{% else %}0{% endif %}; {{ item.specialties.id }}" id="edit-budgetary_places">
+                        <ion-icon name="pencil-outline" class="edit-button-icon"></ion-icon>
+                    </ion-button>
+                    {% endif %}
                     {% endfor %}
                 </ion-list>
+                {% if current_user.is_authenticated %}
+                <ion-button color="success" class="edit-button" id="specialties-edit-button">
+                    <ion-icon name="add-circle-outline" slot="start" class="edit-button-icon"></ion-icon>
+                    <ion-label>
+                        Редактировать
+                    </ion-label>
+                </ion-button>
+                {% endif %}
             </div>
             <div id="news">
                 <ion-title color="primary" class="subtitle bold">Новости</ion-title>
+                {% if not news %}
+                <ion-title color="danger" class="subtitle bold">Новости временно не доступны</ion-title>
+                <br>
+                {% else %}
                 <ion-list id="news-list">
                     {% for item in news %}
                     <ion-card class="news-card" button onclick="window.location.href = `{{  item['url'] + item['link'] }}`">
                         <ion-row>
                             <ion-col class="news-card-col news-card-image-col">
+                                {% if 'http' in item['image'] %}
+                                <img class="news-card-image" src="{{ item['image'] }}" alt=""/>
+                                {% else %}
                                 <img class="news-card-image" src="{{ item['url'] + '/' + item['image'] }}" alt=""/>
+                                {% endif %}
                             </ion-col>
                             <ion-col class="news-card-col" id="content">
                                 <ion-card-header class="news-card-header">
@@ -186,6 +207,7 @@
                     </ion-card>
                     {% endfor %}
                 </ion-list>
+                {% endif %}
                 {% if news_url != '' %}
                 <ion-button expand="block" class="news-all-button" onclick="window.location.href = '{{ news_url }}'">
                     Все Новости
@@ -193,10 +215,10 @@
                 </ion-button>
                 {% endif %}
                 {% if current_user.is_authenticated %}
-                <ion-button color="success" class="edit-button">
+                <ion-button color="success" class="edit-button" id="news-edit-button">
                     <ion-icon name="pencil-outline" slot="start" class="edit-button-icon"></ion-icon>
                     <ion-label>
-                        Редактировать новости
+                        Редактировать
                     </ion-label>
                 </ion-button>
                 {% endif %}
@@ -205,18 +227,13 @@
                 <ion-title color="primary" class="subtitle bold">Отзывы</ion-title>
                 <ion-list class="review-list">
                     <ion-list-header>
-                        {% if avg >= 4 %}
-                        <ion-label class="review-result" color="success">Итоговая оценка
-                        {% elif avg >= 3 %}
-                        <ion-label class="review-result" color="warning">Итоговая оценка
-                        {% else %}
-                        <ion-label class="review-result" color="danger">Итоговая оценка
-                        {% endif %}
+                        <ion-label class="review-result" {% if avg >= 4 %}color="success"{% elif avg >= 3 %}color="warning"{% else %}color="danger"{% endif %}>Итоговая оценка
                         {% if (avg|string).split('.')[1] != '0' %}
-                        {{ (avg|string).replace('.', ',') }} из 5</ion-label>
+                        {{ (avg|string).replace('.', ',') }} из 5
                         {% else %}
-                        {{ (avg|string).split('.')[0] }} из 5</ion-label>
+                        {{ (avg|string).split('.')[0] }} из 5
                         {% endif %}
+                        </ion-label>
                     </ion-list-header>
                     {% for item in university.reviews %}
                     <ion-item>
@@ -240,11 +257,14 @@
                             </h3>
                             <p class="review-text">{{ item.text }}</p>
                         </ion-label>
+                        <ion-button color="danger" class="delete-button" href="/delete_review/{{ item.id }}">
+                            <ion-icon name="trash-outline" class="delete-button-icon"></ion-icon>
+                        </ion-button>
                     </ion-item>
                     {% endfor %}
                 </ion-list>
                 {% if current_user.is_authenticated %}
-                <ion-button color="success" class="add-button">
+                <ion-button color="success" class="add-button" id="add-review">
                     <ion-icon name="add-circle-outline" slot="start" class="add-button-icon"></ion-icon>
                     <ion-label>
                         Добавить отзыв
@@ -264,11 +284,17 @@
         }
     </script>
     <script>
-        var url = '{{ news_data.url }}';
-        var title = '{{ news_data.title }}';
-        var image = '{{ news_data.image }}';
-        var text = '{{ news_data.text }}';
-        var date = '{{ news_data.date }}';
+        const url = '{{ news_data.url }}';
+        const block = '{{ news_data.block }}';
+        const title = '{{ news_data.title }}';
+        const news_url = '{{ news_data.news_url }}';
+        const image = '{{ news_data.image }}';
+        const text = '{{ news_data.text }}';
+        const date = '{{ news_data.date }}';
+        const university_specialties_ids = '{{ university_specialties_id|join("; ") }}'.split('; ');
+        const specialties_ids = '{{ specialties|map(attribute="id")|join("; ") }}'.split('; ');
+        const specialties_names = '{{ specialties|map(attribute="name")|join("; ") }}'.split('; ');
+        const specialties_codes = '{{ specialties|map(attribute="code")|join("; ") }}'.split('; ');
     </script>
     <script src="{{ url_for('static', filename='js/dark_script.js') }}"></script>
     {% if current_user.is_authenticated %}
