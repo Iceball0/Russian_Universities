@@ -257,9 +257,11 @@
                             </h3>
                             <p class="review-text">{{ item.text }}</p>
                         </ion-label>
+			{% if current_user.is_authenticated %}
                         <ion-button color="danger" class="delete-button" href="/delete_review/{{ item.id }}">
                             <ion-icon name="trash-outline" class="delete-button-icon"></ion-icon>
                         </ion-button>
+			{% endif %}
                     </ion-item>
                     {% endfor %}
                 </ion-list>
