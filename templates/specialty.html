@@ -106,21 +106,23 @@
                 </ion-toolbar>
                 <ion-list id="card-list">
                     {% for item in specialty.universities %}
-                    <ion-card class="card" button onclick="window.location.href = '../universities/{{ item.universities.id }}'">
-                        <ion-row>
-                            <ion-col class="card-col card-image-col">
-                                <img class="card-image" src="{{ url_for('static', filename='images/universities/' + item.universities.image) }}" alt=""/>
-                            </ion-col>
-                            <ion-col class="card-col" id="content">
-                                <ion-card-header class="card-header">
-                                    <ion-card-title>{{ item.universities.name }}</ion-card-title>
-                                    <ion-card-subtitle color="primary">г. {{ item.universities.city }}</ion-card-subtitle>
-                                    <div class="university-info-row">Количество бюджетных мест: {{ item.budgetary_places }}</div>
-                                </ion-card-header>
-                                <ion-card-content class="card-desc content-lg">{{ item.universities.description }}</ion-card-content>
-                            </ion-col>
-                        </ion-row>
-                    </ion-card>
+                    <div id="card_block">
+                        <ion-card class="card" button onclick="window.location.href = '../universities/{{ item.universities.id }}'">
+                            <ion-row>
+                                <ion-col class="card-col card-image-col">
+                                    <img class="card-image" src="{{ url_for('static', filename='images/universities/' + item.universities.image) }}" alt=""/>
+                                </ion-col>
+                                <ion-col class="card-col" id="content">
+                                    <ion-card-header class="card-header">
+                                        <ion-card-title>{{ item.universities.name }}</ion-card-title>
+                                        <ion-card-subtitle color="primary">г. {{ item.universities.city }}</ion-card-subtitle>
+                                        <div class="university-info-row">Количество бюджетных мест: {{ item.budgetary_places }}</div>
+                                    </ion-card-header>
+                                    <ion-card-content class="card-desc content-lg">{{ item.universities.description }}</ion-card-content>
+                                </ion-col>
+                            </ion-row>
+                        </ion-card>
+                    </div>
                     {% endfor %}
                 </ion-list>
             </div>

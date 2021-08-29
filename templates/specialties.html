@@ -68,36 +68,44 @@
                     <ion-searchbar placeholder="Поиск специальностей" id="searchbar"></ion-searchbar>
                 </ion-row>
             </ion-toolbar>
+            {% if message != '' %}
+            <div class="banner">
+                {{ message }}
+                <ion-icon slot="end" class="banner-close" name="close-circle-outline"></ion-icon>
+            </div>
+            {% endif %}
             <ion-title color="primary" class="subtitle bold">ВСЕ СПЕЦИАЛЬНОСТИ</ion-title>
             <ion-list id="card-list">
                 {% for item in specialties %}
-                <ion-card class="card" button onclick="window.location.href = 'specialties/{{ item.id }}'">
-                    <ion-row>
-                        <ion-col class="card-col card-image-col">
-                            <img class="card-image" src="{{ url_for('static', filename='images/specialties/' + item.image) }}" alt=""/>
-                        </ion-col>
-                        <ion-col class="card-col" id="content">
-                            <ion-card-header class="card-header">
-                                <ion-card-title>{{ item.name }}</ion-card-title>
-                                <ion-card-subtitle>Код направления: {{ item.code }}</ion-card-subtitle>
-                            </ion-card-header>
-                            <ion-card-content class="specialties-desc content-lg">{{ item.description }}</ion-card-content>
-                        </ion-col>
-                    </ion-row>
-                </ion-card>
-                {% if current_user.is_authenticated %}
-                <div class="edit-buttons">
-                    <ion-button color="success" class="edit-button" name="{{ item.id }}">
-                        <ion-icon name="pencil-outline" class="edit-button-icon"></ion-icon>
-                    </ion-button>
-                    <ion-button color="danger" class="delete-button" href="/delete_specialty/{{ item.id }}">
-                        <ion-icon name="trash-outline" class="delete-button-icon"></ion-icon>
-                    </ion-button>
+                <div id="card_block">
+                    <ion-card class="card" button onclick="window.location.href = 'specialties/{{ item.id }}'">
+                        <ion-row>
+                            <ion-col class="card-col card-image-col">
+                                <img class="card-image" src="{{ url_for('static', filename='images/specialties/' + item.image) }}" alt=""/>
+                            </ion-col>
+                            <ion-col class="card-col" id="content">
+                                <ion-card-header class="card-header">
+                                    <ion-card-title>{{ item.name }}</ion-card-title>
+                                    <ion-card-subtitle>Код направления: {{ item.code }}</ion-card-subtitle>
+                                </ion-card-header>
+                                <ion-card-content class="specialties-desc content-lg">{{ item.description }}</ion-card-content>
+                            </ion-col>
+                        </ion-row>
+                    </ion-card>
+                    {% if current_user.permission == 'admin' %}
+                    <div class="edit-buttons">
+                        <ion-button color="success" class="edit-button" name="{{ loop.index }}">
+                            <ion-icon name="pencil-outline" class="edit-button-icon"></ion-icon>
+                        </ion-button>
+                        <ion-button color="danger" class="delete-button" href="/delete_specialty/{{ item.id }}">
+                            <ion-icon name="trash-outline" class="delete-button-icon"></ion-icon>
+                        </ion-button>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
                 {% endfor %}
             </ion-list>
-            {% if current_user.is_authenticated %}
+            {% if current_user.permission == 'admin' %}
             <ion-button color="success" class="add-button">
                 <ion-icon name="add-circle-outline" slot="start" class="add-button-icon"></ion-icon>
                 <ion-label>
@@ -116,7 +124,7 @@
     </script>
     <script src="{{ url_for('static', filename='js/dark_script.js') }}"></script>
     <script src="{{ url_for('static', filename='js/searchbar_script.js') }}"></script>
-    {% if current_user.is_authenticated %}
+    {% if current_user.permission == 'admin' %}
     <script src="{{ url_for('static', filename='js/specialties_modal.js') }}"></script>
     {% endif %}
 </body>

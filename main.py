@@ -1,18 +1,19 @@
 # импорт библиотек и модулей
 import os
-from bs4 import BeautifulSoup
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, url_for, session
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 from flask_restful import abort, Api
 from requests import get
 from sqlalchemy.sql import func
+from authlib.integrations.flask_client import OAuth
 from data import db_session, specialties_api, universities_api
 from data.universities_specialties import Universities_Specialties
 from data.universities import Universities
 from data.specialties import Specialties
 from data.reviews import Reviews
 from data.news import News
-from data.admins import Admin
+from data.users import User
+from data.parser import parser
 
 # инициализация Flask и login manager
 app = Flask(__name__)
@@ -20,6 +21,20 @@ api = Api(app)
 app.config['SECRET_KEY'] = 'russian_universities_secret_key_1396'
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+# oauth config
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id='652011356373-89fc26iqg67fpdk027qoc1svh2jk4mlp.apps.googleusercontent.com',
+    client_secret='dP9EcZYCTvbWnCxcpA18U2mm',
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    client_kwargs={'scope': 'openid email profile'},
+)
 
 
 def main():
@@ -35,20 +50,26 @@ def main():
 
     # запуск приложения
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='127.0.0.1', port=port, debug=True)
 
 
 # загрузка аккаунта администратора
 @login_manager.user_loader
-def load_admin(admin_id):
+def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(Admin).get(admin_id)
+    return db_sess.query(User).get(user_id)
 
 
 # загрузка начальной страницы
 @app.route("/", methods=['POST', 'GET'])
 def index():
     db_sess = db_session.create_session()
+
+    # удаление сессии регистрации
+    if 'profile' in session:
+        session.pop('profile', None)
+
+    message = ''
 
     # проверка на POST запрос
     if request.method == 'POST':
@@ -59,41 +80,46 @@ def index():
         # если запрос был отправлен из формы добавления университета
         if 'add-submit' in request.form:
             # добавляем данные формы в БД
-            university = Universities()
-            university.name = request.form['title']
-            university.description = request.form['description']
-            university.city = request.form['city']
-            university.placeInRussianTop = request.form['TopInRussia']
+            university_add = Universities()
+            university_add.name = request.form['title']
+            university_add.description = request.form['description']
+            university_add.city = request.form['city']
+            university_add.placeInRussianTop = request.form['TopInRussia']
 
             # получаем файл картинки из формы, сохраняем и заносим название в БД
             f = request.files['photo']
             f.save(f'static/images/universities/{f.filename}')
-            university.image = f.filename
+            university_add.image = f.filename
 
             # добавляем все данные в БД, комитим и перенаправляем на главную страницу
-            db_sess.add(university)
+            db_sess.add(university_add)
             db_sess.commit()
             redirect('/')
 
         # если запрос был отправлен из формы редактирования университета
         else:
             # получаем данные университета из БД по айди
-            university = db_sess.query(Universities).filter(Universities.id == request.form['univ-id']).first()
+            university_edit = db_sess.query(Universities).filter(Universities.id == request.form['univ-id']).first()
 
             # если такой университет существует, то редактируем его, иначе вызываем ошибку 404
-            if university:
+            if university_edit:
                 # редактируем данные, заменяя их на данные из формы
-                university.name = request.form['title']
-                university.description = request.form['description']
-                university.city = request.form['city']
-                university.placeInRussianTop = request.form['TopInRussia']
+                university_edit.name = request.form['title']
+                university_edit.description = request.form['description']
+                university_edit.city = request.form['city']
+                university_edit.placeInRussianTop = request.form['TopInRussia']
 
                 # если был прикреплён файл картинки, то сохраняем её, удаляем прошлую и запоминаем название в БД
                 if request.files['photo']:
                     f = request.files['photo']
-                    os.remove(f'static/images/universities/{university.image}')
+                    try:
+                        os.remove(f'static/images/universities/{university_edit.image}')
+                    except FileNotFoundError:
+                        pass
+                    except Exception as e:
+                        message = e
                     f.save(f'static/images/universities/{f.filename}')
-                    university.image = f.filename
+                    university_edit.image = f.filename
 
                 # подтверждаем изменения и возвращаемся на главную страницу
                 db_sess.commit()
@@ -109,7 +135,7 @@ def index():
               for item in all_universities]
 
     # загружаем страницу и передаём все нужные данные
-    return render_template('index.html', universities=all_universities, counts=counts, ratings=ratings)
+    return render_template('index.html', universities=all_universities, counts=counts, ratings=ratings, message=message)
 
 
 # загрузка страницы отдельного вуза
@@ -129,46 +155,36 @@ def university(university_id):
         if 'edit-news-submit' in request.form:
             # получаем данные университета из БД по айди
             news_edit = db_sess.query(News).get(university_id)
+            edit = True
 
-            # если данные существуют, то редактируем их и сохраняем
-            if news_edit:
-                news_edit.url = request.form['url']
-                news_edit.block = request.form['block']
-                news_edit.title = request.form['title']
-                news_edit.image = request.form['image']
-                if request.form['text'] == '-':
-                    news_edit.text = ''
-                else:
-                    news_edit.text = request.form['text']
-                news_edit.date = request.form['date']
-                news_edit.news_url = request.form['news_url']
-                db_sess.commit()
-                redirect(f'/university/{university_id}')
-
-            # если данные не существуют, то добавляем их и сохраняем
+            # если данные существуют, то редактируем их и сохраняем, иначе добавляем их
+            if not news_edit:
+                news_edit = News()
+                edit = False
+            news_edit.url = request.form['url']
+            news_edit.block = request.form['block']
+            news_edit.title = request.form['title']
+            news_edit.image = request.form['image']
+            if request.form['text'] == '-':
+                news_edit.text = ''
             else:
-                news_add = News()
-                news_add.university_id = university_id
-                news_add.url = request.form['url']
-                news_add.block = request.form['block']
-                news_add.title = request.form['title']
-                news_add.image = request.form['image']
-                if request.form['text'] == '-':
-                    news_add.text = ''
-                else:
-                    news_add.text = request.form['text']
-                news_add.text = request.form['text']
-                news_add.date = request.form['date']
-                news_add.news_url = request.form['news_url']
-                db_sess.add(news_add)
-                db_sess.commit()
-                redirect(f'/university/{university_id}')
+                news_edit.text = request.form['text']
+            news_edit.date = request.form['date']
+            news_edit.news_url = request.form['news_url']
+            if not edit:
+                db_sess.add(news_edit)
+            db_sess.commit()
+            redirect(f'/university/{university_id}')
 
         # если запрос был отправлен из формы добавления отзывов
         elif 'add-submit' in request.form:
             # добавляем отзыв в БД
             review = Reviews()
-            review.user_name = request.form['name']
+            if current_user.permission == 'user':
+                review.user_name = f"{current_user.surname} {current_user.name}"
+            else:
+                review.user_name = request.form['name']
+            review.user_email = current_user.login
             review.text = request.form['opinion']
             review.rating = request.form['rating']
             review.university_id = university_id
@@ -176,6 +192,7 @@ def university(university_id):
             db_sess.commit()
             redirect(f'/university/{university_id}')
 
+        # если запрос был отправлен из формы редактирования специальностей вуза
         elif 'edit-specialties-submit' in request.form:
             for i in enumerate(request.form.getlist('checkbox')):
                 connection = db_sess.query(Universities_Specialties).filter(
@@ -195,6 +212,7 @@ def university(university_id):
                         db_sess.commit()
                         redirect(f'/university/{university_id}')
 
+        # если запрос был отправлен из формы редактирования количества бюджетных мест
         elif 'edit-budgetary_places-submit' in request.form:
             connection = db_sess.query(Universities_Specialties).filter(
                 Universities_Specialties.university_id == university_id,
@@ -204,11 +222,11 @@ def university(university_id):
             redirect(f'/university/{university_id}')
 
     # получем данные университета и его новостей из БД, координаты из api поиска по орг, оценку вуза, и парсим новости
-    university = db_sess.query(Universities).get(university_id)
+    university_data = db_sess.query(Universities).get(university_id)
     all_specialties = db_sess.query(Specialties).all()
-    university_specialties_id = [i.specialties.id for i in university.specialties]
+    university_specialties_id = [i.specialties.id for i in university_data.specialties]
     news_ = db_sess.query(News).get(university_id)
-    coordinates = finder(university.name)
+    coordinates = finder(university_data.name)
     if news_:
         news = parser(university_id)
         news_url = news_.url
@@ -221,7 +239,7 @@ def university(university_id):
         news = []
         avg = 0
         news_url = ''
-    return render_template('university.html', university=university, avg=avg, news=news, news_url=news_url,
+    return render_template('university.html', university=university_data, avg=avg, news=news, news_url=news_url,
                            coordinates=coordinates, news_data=news_, specialties=all_specialties,
                            university_specialties_id=university_specialties_id)
 
@@ -232,6 +250,8 @@ def specialties():
     # создание сессии
     db_sess = db_session.create_session()
 
+    message = ''
+
     # проверка на POST запрос
     if request.method == 'POST':
         # перенаправление на страницу специальностей при попытке отправить POST запрос неавторизованным пользователем
@@ -241,39 +261,46 @@ def specialties():
         # если запрос был отправлен из формы добавления специальности
         if 'add-submit' in request.form:
             # добавляем данные формы в БД
-            specialty = Specialties()
-            specialty.name = request.form['title']
-            specialty.description = request.form['description']
-            specialty.code = request.form['code']
+            specialty_add = Specialties()
+            specialty_add.name = request.form['title']
+            specialty_add.description = request.form['description']
+            specialty_add.code = request.form['code']
 
             # получаем файл картинки из формы, сохраняем и заносим название в БД
             f = request.files['photo']
-            f.save(f'static/images/specialties/{f.filename}')
-            specialty.image = f.filename
+            filename = f.filename.split('.')[-1]
+            f.save(f"static/images/specialties/{request.form['code']}.{filename}")
+            specialty_add.image = f"{request.form['code']}.{filename}"
 
             # добавляем все данные в БД, комитим и перенаправляем на страницу специальностей
-            db_sess.add(specialty)
+            db_sess.add(specialty_add)
             db_sess.commit()
             redirect('/specialties')
 
         # если запрос был отправлен из формы редактирования специальности
         else:
             # получаем данные специальности из БД по айди
-            specialty = db_sess.query(Specialties).filter(Specialties.id == request.form['spec-id']).first()
+            specialty_edit = db_sess.query(Specialties).filter(Specialties.id == request.form['spec-id']).first()
 
             # если такой специальность существует, то редактируем её, иначе вызываем ошибку 404
-            if specialty:
+            if specialty_edit:
                 # редактируем данные, заменяя их на данные из формы
-                specialty.name = request.form['title']
-                specialty.description = request.form['description']
-                specialty.code = request.form['code']
+                specialty_edit.name = request.form['title']
+                specialty_edit.description = request.form['description']
+                specialty_edit.code = request.form['code']
 
                 # если был прикреплён файл картинки, то сохраняем её, удаляем прошлую и запоминаем название в БД
                 if request.files['photo']:
                     f = request.files['photo']
-                    os.remove(f'static/images/specialties/{specialty.image}')
-                    f.save(f'static/images/specialties/{f.filename}')
-                    specialty.image = f.filename
+                    try:
+                        os.remove(f'static/images/specialties/{specialty_edit.image}')
+                    except FileNotFoundError:
+                        pass
+                    except Exception as e:
+                        message = e
+                    filename = f.filename.split('.')[-1]
+                    f.save(f"static/images/specialties/{request.form['code']}.{filename}")
+                    specialty_edit.image = f"{request.form['code']}.{filename}"
 
                 # подтверждаем изменения и возвращаемся на страницу специальностей
                 db_sess.commit()
@@ -283,22 +310,29 @@ def specialties():
 
     # получаем список всех специальностей, загружаем страницу и передаём все нужные данные
     all_specialties = db_sess.query(Specialties).all()
-    return render_template('specialties.html', specialties=all_specialties)
+
+    return render_template('specialties.html', specialties=all_specialties, message=message)
+
+
+# отображение страницы ошибки
+@app.errorhandler(404)
+def error_404(e):
+    return render_template('404.html')
 
 
 # функция, проверяющая существование вуза и вызывающая 404 при его отсутствии
 def abort_if_university_not_found(university_id):
-    session = db_session.create_session()
-    university = session.query(Universities).get(university_id)
-    if not university:
+    abort_session = db_session.create_session()
+    university_data = abort_session.query(Universities).get(university_id)
+    if not university_data:
         abort(404, message=f"University {university_id} not found")
 
 
 # функция, проверяющая существование специальности и вызывающая 404 при её отсутствии
 def abort_if_specialty_not_found(specialty_id):
-    session = db_session.create_session()
-    specialty = session.query(Specialties).get(specialty_id)
-    if not specialty:
+    abort_session = db_session.create_session()
+    specialty_data = abort_session.query(Specialties).get(specialty_id)
+    if not specialty_data:
         abort(404, message=f"Specialty {specialty_id} not found")
 
 
@@ -308,8 +342,8 @@ def specialty(specialty_id):
     # проверяем существование специальности по её айди и в случае успеха создаём сессию, получаем данные и загружаем стр
     abort_if_specialty_not_found(specialty_id)
     db_sess = db_session.create_session()
-    specialty = db_sess.query(Specialties).get(specialty_id)
-    return render_template('specialty.html', specialty=specialty)
+    specialty_data = db_sess.query(Specialties).get(specialty_id)
+    return render_template('specialty.html', specialty=specialty_data)
 
 
 # обработка формы авторизации
@@ -322,13 +356,13 @@ def login():
     if request.method == 'POST':
         # авторизируем пользователя
         db_sess = db_session.create_session()
-        admin = db_sess.query(Admin).filter(Admin.login == request.form['login']).first()
-        if admin and admin.check_password(request.form['password']):
+        user = db_sess.query(User).filter(User.login == request.form['login']).first()
+        if user and user.check_password(request.form['password'].lower()):
             if request.form['remember']:
                 remember = True
             else:
                 remember = False
-            login_user(admin, remember=remember)
+            login_user(user, remember=remember)
             return redirect("/")
         else:
             return render_template('login.html',
@@ -336,6 +370,45 @@ def login():
 
     # загружаем страницу авторизации
     return render_template('login.html')
+
+
+# обработка формы регистрации
+@app.route("/signup", methods=['POST', 'GET'])
+def signup():
+    # если нет сессии авторизации, то возвращаем его на страницу авторизации
+    if 'profile' not in session:
+        return redirect("/login")
+
+    # проверяем пароль
+    if request.method == 'POST':
+        if request.form['password'] == request.form['password2']:
+            if request.form['password'].lower() not in 'qwertyuiopasdfghjklzxcvbnm1234567890':
+                # регистрируем пользователя
+                db_sess = db_session.create_session()
+                user = User()
+                user.login = session['profile']['email']
+                user.surname = session['profile']['family_name']
+                user.name = session['profile']['given_name']
+                user.permission = 'user'
+                user.set_password(request.form['password'].lower())
+                if request.form['remember']:
+                    remember = True
+                else:
+                    remember = False
+                db_sess.add(user)
+                db_sess.commit()
+                session.pop('profile', None)
+                login_user(user, remember=remember)
+                return redirect("/")
+            else:
+                return render_template('login.html',
+                                       message="Пароль слишком простой", signup=True)
+        else:
+            return render_template('login.html',
+                                   message="Пароли не совпадают", signup=True)
+
+    # загружаем страницу авторизации
+    return render_template('login.html', signup=True)
 
 
 # обработка выхода из аккаунта
@@ -346,31 +419,70 @@ def logout():
     return redirect("/")
 
 
+# авторизация через Google аккаунт
+@app.route('/login_google')
+def login_google():
+    # если пользователь уже авторизирован, то возвращаем его на главную страницу
+    if current_user.is_authenticated:
+        return redirect("/")
+
+    google_client = oauth.create_client('google')
+    redirect_uri = url_for('authorize', _external=True)
+    return google_client.authorize_redirect(redirect_uri)
+
+
+@app.route('/authorize')
+def authorize():
+    try:
+        google_auth = oauth.create_client('google')
+        token = google_auth.authorize_access_token()
+        resp = google_auth.get('userinfo')
+        user_info = resp.json()
+        # do something with the token and profile
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.login == user_info['email']).first()
+        if user:
+            login_user(user, remember=True)
+            return redirect("/")
+        else:
+            session['profile'] = user_info
+            return redirect('/signup')
+    except Exception:
+        return redirect('/')
+
+
 # удаление вуза из БД
 @app.route('/delete_university/<int:univ_id>', methods=['POST', 'GET'])
 @login_required
 def delete_univ(univ_id):
+    if current_user.permission != 'admin':
+        return redirect('/')
+
     db_sess = db_session.create_session()
-    university = db_sess.query(Universities).get(univ_id)
+    delete_university = db_sess.query(Universities).get(univ_id)
 
     # если вуз существует то удаляем, иначе вызываем 404
-    if university:
+    if delete_university:
         # получаем все связанные с вузом специальности и удаляем связь с ними
-        specialties = db_sess.query(Universities_Specialties).filter(Universities_Specialties.university_id == univ_id).all()
-        if specialties:
-            for i in specialties:
+        delete_specialties_connection = db_sess.query(Universities_Specialties).filter(Universities_Specialties.university_id == univ_id).all()
+        if delete_specialties_connection:
+            for i in delete_specialties_connection:
                 db_sess.delete(i)
                 db_sess.commit()
 
         # удаляем отзывы к вузу
-        for i in university.reviews:
+        for i in delete_university.reviews:
             db_sess.delete(i)
 
+        un_news = db_sess.query(News).get(univ_id)
+        if un_news:
+            db_sess.delete(un_news)
+
         # удаляем картинку
-        os.remove(f'static/images/universities/{university.image}')
+        os.remove(f'static/images/universities/{delete_university.image}')
 
         # подтверждаем удаление
-        db_sess.delete(university)
+        db_sess.delete(delete_university)
         db_sess.commit()
     else:
         abort(404)
@@ -381,23 +493,26 @@ def delete_univ(univ_id):
 @app.route('/delete_specialty/<int:spec_id>', methods=['POST', 'GET'])
 @login_required
 def delete_spec(spec_id):
+    if current_user.permission != 'admin':
+        return redirect('/')
+
     db_sess = db_session.create_session()
-    specialty = db_sess.query(Specialties).get(spec_id)
+    delete_specialty = db_sess.query(Specialties).get(spec_id)
 
     # если специальность существует то удаляем, иначе вызываем 404
-    if specialty:
+    if delete_specialty:
         # получаем все связанные со специальностью вузы и удаляем связь с ними
-        universities = db_sess.query(Universities_Specialties).filter(Universities_Specialties.specialty_id == spec_id).all()
-        if universities:
-            for i in universities:
+        delete_universities_connection = db_sess.query(Universities_Specialties).filter(Universities_Specialties.specialty_id == spec_id).all()
+        if delete_universities_connection:
+            for i in delete_universities_connection:
                 db_sess.delete(i)
                 db_sess.commit()
 
         # удаляем картинку
-        os.remove(f'static/images/specialties/{specialty.image}')
+        os.remove(f'static/images/specialties/{delete_specialty.image}')
 
         # подтверждаем удаление
-        db_sess.delete(specialty)
+        db_sess.delete(delete_specialty)
         db_sess.commit()
     else:
         abort(404)
@@ -413,6 +528,8 @@ def delete_review(review_id):
 
     # если отзыв существует то удаляем, иначе вызываем 404
     if review:
+        if review.user_email != current_user.login and current_user.permission != 'admin':
+            return redirect('/')
         university_id = review.university_id
 
         # подтверждаем удаление
@@ -422,79 +539,6 @@ def delete_review(review_id):
         return redirect(f"/universities/{university_id}")
     else:
         abort(404)
-
-
-# парсер новостей
-def parser(university_id):
-    # получаем данные для парсера из БД
-    session = db_session.create_session()
-    news = session.query(News).get(university_id)
-
-    try:
-        # обращаемся к сайту, получаем данные, раскидываем по массивам и возвращаем всё
-        r = get(news.url)
-        soup = BeautifulSoup(r.text, 'html.parser')
-
-        titles = []
-        links = []
-        texts = []
-        dates = []
-        images = []
-
-        for block in soup.find_all(news.block.split()[0], class_=news.block.split()[1])[:5]:
-
-            link = block.find(news.title.split()[0], class_=news.title.split()[1])
-            titles.append(link.text.strip())
-
-            if news.news_url.split()[0] == 'a':
-                link = block.find(news.news_url.split()[0], class_=news.news_url.split()[1], href=True)
-                link2 = link['href']
-                if link2[0] != '/':
-                    link2 = f'/{link2}'
-                links.append(link2)
-            else:
-                link = block.find(news.news_url.split()[0], class_=news.news_url.split()[1])
-                link2 = link.find('a', href=True)['href']
-                if link2[0] != '/':
-                    link2 = f'/{link2}'
-                links.append(link2)
-
-            if len(news.image.split()) == 3:
-                link = block.find(news.image.split()[0], class_=news.image.split()[1], style=True)
-                link2 = link['style'].split("url('")[1][:-2]
-                images.append(link2)
-            else:
-                link = block.find(news.image.split()[0], class_=news.image.split()[1])
-                link2 = link.find('img', src=True)['src']
-                images.append(link2)
-
-            link = block.find(news.date.split()[0], class_=news.date.split()[1])
-            dates.append(' '.join(link.text.strip().split()))
-
-            if news.text != '':
-                link = block.find(news.text.split()[0], class_=news.text.split()[1])
-                texts.append(link.text.strip())
-
-        url = news.url.split('/')[:3]
-
-        news_li = []
-
-        if not texts:
-            for i in range(5):
-                dict1 = {'url': f"{url[0]}//{url[2]}", 'link': links[i], 'title': titles[i], 'image': images[i],
-                         'text': '', 'date': dates[i]}
-                news_li.append(dict1)
-        else:
-            for i in range(5):
-                dict1 = {'url': f"{url[0]}//{url[2]}", 'link': links[i], 'title': titles[i], 'image': images[i],
-                         'text': texts[i], 'date': dates[i]}
-                news_li.append(dict1)
-
-        return news_li
-
-    # в случае возникновения неполадок, отправляем пустой массив
-    except Exception:
-        return []
 
 
 # олучаем координаты вуза по названию с api поиска по организациям

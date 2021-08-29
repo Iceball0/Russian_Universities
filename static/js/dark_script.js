@@ -28,7 +28,8 @@ if (get_cookie('theme')) {
 
             if (document.getElementById('card-list')) {
                 cards.forEach(item => {
-                    item.classList.add('dark');
+                    let card_block = item.querySelector('ion-card');
+                    card_block.classList.add('dark');
                 });
             }
 
@@ -58,7 +59,8 @@ if (get_cookie('theme')) {
 
             if (document.getElementById('card-list')) {
                 cards.forEach(item => {
-                    item.classList.remove('dark');
+                    let card_block = item.querySelector('ion-card');
+                    card_block.classList.remove('dark');
                 });
             }
 
@@ -87,7 +89,8 @@ if (toggle) {
     toggle.addEventListener('ionChange', (ev) => {
         document.body.classList.toggle('dark', ev.detail.checked);
         cards.forEach(item => {
-            item.classList.toggle('dark');
+            let card_block = item.querySelector('ion-card');
+            card_block.classList.toggle('dark');
         });
         if (document.getElementById('news-list')) {
             news.forEach(item => {

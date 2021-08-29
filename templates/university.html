@@ -148,29 +148,31 @@
                 </ion-toolbar>
                 <ion-list id="card-list">
                     {% for item in university.specialties %}
-                    <ion-card class="specialties-card" button onclick="window.location.href = '../specialties/{{ item.specialties.id }}'">
-                        <ion-row>
-                            <ion-col class="specialties-card-col specialties-card-image-col">
-                                <img class="specialties-card-image" src="{{ url_for('static', filename='images/specialties/' + item.specialties.image) }}" alt=""/>
-                            </ion-col>
-                            <ion-col class="specialties-card-col" id="content">
-                                <ion-card-header class="specialties-card-header">
-                                    <ion-card-title>{{ item.specialties.name }}</ion-card-title>
-                                    <ion-card-subtitle color="primary">Код направления: {{ item.specialties.code }}</ion-card-subtitle>
-                                    <div class="specialties-info-row">Количество бюджетных мест: {{ item.budgetary_places }}</div>
-                                </ion-card-header>
-                                <ion-card-content class="specialties-card-desc content-lg">{{ item.specialties.description }}</ion-card-content>
-                            </ion-col>
-                        </ion-row>
-                    </ion-card>
-                    {% if current_user.is_authenticated %}
-                    <ion-button color="success" class="edit-budgetary_places" name="{% if item.budgetary_places %}{{ item.budgetary_places }}{% else %}0{% endif %}; {{ item.specialties.id }}" id="edit-budgetary_places">
-                        <ion-icon name="pencil-outline" class="edit-button-icon"></ion-icon>
-                    </ion-button>
-                    {% endif %}
+                    <div id="card_block">
+                        <ion-card class="specialties-card" button onclick="window.location.href = '../specialties/{{ item.specialties.id }}'">
+                            <ion-row>
+                                <ion-col class="specialties-card-col specialties-card-image-col">
+                                    <img class="specialties-card-image" src="{{ url_for('static', filename='images/specialties/' + item.specialties.image) }}" alt=""/>
+                                </ion-col>
+                                <ion-col class="specialties-card-col" id="content">
+                                    <ion-card-header class="specialties-card-header">
+                                        <ion-card-title>{{ item.specialties.name }}</ion-card-title>
+                                        <ion-card-subtitle color="primary">Код направления: {{ item.specialties.code }}</ion-card-subtitle>
+                                        <div class="specialties-info-row">Количество бюджетных мест: {{ item.budgetary_places }}</div>
+                                    </ion-card-header>
+                                    <ion-card-content class="specialties-card-desc content-lg">{{ item.specialties.description }}</ion-card-content>
+                                </ion-col>
+                            </ion-row>
+                        </ion-card>
+                        {% if current_user.permission == 'admin' %}
+                        <ion-button color="success" class="edit-budgetary_places" name="{% if item.budgetary_places %}{{ item.budgetary_places }}{% else %}0{% endif %}; {{ item.specialties.id }}" id="edit-budgetary_places">
+                            <ion-icon name="pencil-outline" class="edit-button-icon"></ion-icon>
+                        </ion-button>
+                        {% endif %}
+                    </div>
                     {% endfor %}
                 </ion-list>
-                {% if current_user.is_authenticated %}
+                {% if current_user.permission == 'admin' %}
                 <ion-button color="success" class="edit-button" id="specialties-edit-button">
                     <ion-icon name="add-circle-outline" slot="start" class="edit-button-icon"></ion-icon>
                     <ion-label>
@@ -214,7 +216,7 @@
                     <ion-icon name="arrow-forward-outline" slot="end"></ion-icon>
                 </ion-button>
                 {% endif %}
-                {% if current_user.is_authenticated %}
+                {% if current_user.permission == 'admin' %}
                 <ion-button color="success" class="edit-button" id="news-edit-button">
                     <ion-icon name="pencil-outline" slot="start" class="edit-button-icon"></ion-icon>
                     <ion-label>
@@ -224,6 +226,10 @@
                 {% endif %}
             </div>
             <div id="reviews">
+                <div class="banner">
+                    Для того, чтобы оставить отзыв, необходимо зарегистрироваться через Google аккаунт
+                    <ion-icon slot="end" class="banner-close" name="close-circle-outline"></ion-icon>
+                </div>
                 <ion-title color="primary" class="subtitle bold">Отзывы</ion-title>
                 <ion-list class="review-list">
                     <ion-list-header>
@@ -257,16 +263,23 @@
                             </h3>
                             <p class="review-text">{{ item.text }}</p>
                         </ion-label>
-			{% if current_user.is_authenticated %}
+                        {% if current_user.permission == 'admin' or current_user.login == item.user_email %}
                         <ion-button color="danger" class="delete-button" href="/delete_review/{{ item.id }}">
                             <ion-icon name="trash-outline" class="delete-button-icon"></ion-icon>
                         </ion-button>
-			{% endif %}
+                        {% endif %}
                     </ion-item>
                     {% endfor %}
                 </ion-list>
                 {% if current_user.is_authenticated %}
                 <ion-button color="success" class="add-button" id="add-review">
+                    <ion-icon name="add-circle-outline" slot="start" class="add-button-icon"></ion-icon>
+                    <ion-label>
+                        Добавить отзыв
+                    </ion-label>
+                </ion-button>
+                {% else %}
+                <ion-button color="success" class="add-button" id="review-message">
                     <ion-icon name="add-circle-outline" slot="start" class="add-button-icon"></ion-icon>
                     <ion-label>
                         Добавить отзыв
@@ -285,7 +298,9 @@
             await menuController.toggle();
         }
     </script>
+    {% if current_user.permission == 'admin' %}
     <script>
+        const admin = true;
         const url = '{{ news_data.url }}';
         const block = '{{ news_data.block }}';
         const title = '{{ news_data.title }}';
@@ -298,10 +313,19 @@
         const specialties_names = '{{ specialties|map(attribute="name")|join("; ") }}'.split('; ');
         const specialties_codes = '{{ specialties|map(attribute="code")|join("; ") }}'.split('; ');
     </script>
-    <script src="{{ url_for('static', filename='js/dark_script.js') }}"></script>
-    {% if current_user.is_authenticated %}
-    <script src="{{ url_for('static', filename='js/university_modal.js') }}"></script>
+    {% else %}
+    <script>
+        const btnClose = document.querySelector(".banner-close");
+        if (btnClose) {
+            btnClose.addEventListener("click", function (closeEvt) {
+                const banner = document.querySelector(".banner");
+                banner.parentNode.removeChild(banner); 
+            }); 
+        }
+    </script>
     {% endif %}
+    <script src="{{ url_for('static', filename='js/dark_script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/university_modal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/searchbar_script.js') }}"></script>
 </body>
 </html>

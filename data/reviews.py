@@ -10,9 +10,10 @@ class Reviews(SqlAlchemyBase, SerializerMixin):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, unique=True,
                            primary_key=True, autoincrement=True)
-    user_name = sqlalchemy.Column(sqlalchemy.Text, nullable=True)
-    text = sqlalchemy.Column(sqlalchemy.Text, nullable=True)
-    rating = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    user_name = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
+    user_email = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
+    text = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
+    rating = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     university_id = sqlalchemy.Column(sqlalchemy.Integer,
                                       sqlalchemy.ForeignKey("universities.id"))
     universities = orm.relation('Universities')

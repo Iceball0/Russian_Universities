@@ -103,6 +103,9 @@ $(document).ready(function(){
     $(document.getElementsByName('back')[0]).click(function(){
         window.location.href = '/';
     });
+    $('#review-message').click(function() {
+        $('.banner').css('display', 'block');
+    });
 
     // функция получения куки
 

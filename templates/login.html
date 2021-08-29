@@ -2,7 +2,11 @@
 <html lang="ru">
 
 <head>
+    {% if not signup %}
     <title>Авторизация | Вузы России</title>
+    {% else %}
+    <title>Регистрация | Вузы России</title>
+    {% endif %}
 
     <!--Meta tags-->
     <meta charset="utf-8">
@@ -40,6 +44,7 @@
             {% endif %}
             <div class="bg"></div>
             <div class="bg-dark"></div>
+            {% if not signup %}
             <ion-card>
                 <ion-card-header>
                     <ion-title color="primary">Авторизация</ion-title>
@@ -53,7 +58,7 @@
                             </ion-item>
                             <ion-item>
                                 <ion-label position="floating">Пароль</ion-label>
-                                <ion-input autocomplete="one-time-code" type="password" name="password" required />
+                                <ion-input autocomplete="off" type="password" name="password" required />
                             </ion-item>
                         </ion-list>
                         <div class="checkbox">
@@ -61,11 +66,45 @@
                             <label for="remember">Запомнить меня</label>  
                         </div>
                         <div class="but">
-                            <ion-button color="success" type="submit" class="confirm" id="do_login">Войти</ion-button>
+                            <ion-button type="submit" class="confirm" id="do_login">Войти</ion-button>
+                        </div>  
+                        <div class="google_but">
+                            <ion-button type="button" class="google" onclick="location.href = '/login_google'">
+                                <ion-icon name="logo-google" slot="start"></ion-icon>
+                                Google
+                            </ion-button>
                         </div>  
                     </form>
                 </ion-card-content>
             </ion-card>
+            {% else %}
+            <ion-card>
+                <ion-card-header>
+                    <ion-title color="primary">Регистрация</ion-title>
+                </ion-card-header>
+                <ion-card-content>
+                    <form action="" method="POST" class="form_input">
+                        <ion-list>
+                            <ion-item>
+                                <ion-label position="floating">Пароль</ion-label>
+                                <ion-input autocomplete="off" type="password" name="password" required />
+                            </ion-item>
+                            <ion-item>
+                                <ion-label position="floating">Повторите пароль</ion-label>
+                                <ion-input autocomplete="off" type="password" name="password2" required />
+                            </ion-item>
+                        </ion-list>
+                        <div class="checkbox">
+                            <ion-checkbox class="check" id="remember" name="remember"></ion-checkbox>
+                            <label for="remember">Запомнить меня</label>  
+                        </div>
+                        <div class="password_confirm_but">
+                            <ion-button type="submit" class="confirm" id="do_login">Войти</ion-button>
+                        </div>  
+                    </form>
+                </ion-card-content>
+            </ion-card>
+            {% endif %}
         </ion-content>
     </ion-app>
     <script>

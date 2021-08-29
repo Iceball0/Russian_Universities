@@ -5,6 +5,10 @@ form {
     top: 15%;
 }
 
+.review {
+    top: 20%;
+}
+
 .modal-wrapper {
     border-radius: 25px !important;
 }

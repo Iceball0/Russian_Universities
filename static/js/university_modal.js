@@ -7,21 +7,36 @@ customElements.define('modal-page', class ModalContent extends HTMLElement {
         let inputs;
         let but_name;
         let modal_title;
+        let form_class = '';
         if (edit_mode === 'add_review') {
-            inputs = `
+            if (typeof admin !== 'undefined') {
+                inputs = `
                         <ion-item>
                             <ion-label position="floating">Имя</ion-label>
                             <ion-input id="name" name="name" placeholder="Введите ваше имя" required></ion-input>
                         </ion-item>
                         <ion-item>
                             <ion-label position="floating">Текст</ion-label>
-                            <ion-input id="opinion" name="opinion" placeholder="Введите ваше мнение об университете" required></ion-input>
+                            <ion-textarea id="opinion" name="opinion" placeholder="Введите ваше мнение об университете" class="textarea" required></ion-textarea>
                         </ion-item>
                         <ion-item>
                             <ion-label position="floating">Оценка</ion-label>
                             <ion-input id="rating" name="rating" placeholder="Введите вашу оценку" type="number" min="0" max="5" required></ion-input>
                         </ion-item>
-            `;
+                `;
+            } else {
+                inputs = `
+                        <ion-item>
+                            <ion-label position="floating">Текст</ion-label>
+                            <ion-textarea id="opinion" name="opinion" placeholder="Введите ваше мнение об университете" class="textarea" required></ion-textarea>
+                        </ion-item>
+                        <ion-item>
+                            <ion-label position="floating">Оценка</ion-label>
+                            <ion-input id="rating" name="rating" placeholder="Введите вашу оценку" type="number" min="0" max="5" required></ion-input>
+                        </ion-item>
+                `;    
+            }
+            form_class = 'class="review"';
             but_name = 'add-submit';
             modal_title = 'Оставить отзыв';
         }
@@ -100,7 +115,7 @@ customElements.define('modal-page', class ModalContent extends HTMLElement {
                 </ion-toolbar>
             </ion-header>
             <ion-content fullscreen>
-                <form action="" method="post" enctype="multipart/form-data">
+                <form action="" method="post" ${form_class} enctype="multipart/form-data">
                     <input id="spec-id" name="spec-id" hidden />
                     <ion-list class="modal-list">
                     ${inputs}    
@@ -119,23 +134,25 @@ customElements.define('modal-page', class ModalContent extends HTMLElement {
     }
 });
 
-let pause = false;
+var pause = false;
 
 let currentModal = null;
 
 // отображение формы по нажатию на кнопку "редактировать" в разделе новостей
 const button = document.getElementById('news-edit-button');
-button.addEventListener('click', () => {
-    edit_mode = 'edit_news';
-    presentModal();
-});
+if (button) {
+    button.addEventListener('click', () => {
+        edit_mode = 'edit_news';
+        presentModal();
+    });
 
-// отображение формы по нажатию на кнопку "редактировать" в разделе специальностей вуза
-const button2 = document.getElementById('specialties-edit-button');
-button2.addEventListener('click', () => {
-    edit_mode = 'edit_specialties';
-    presentModal();
-});
+    // отображение формы по нажатию на кнопку "редактировать" в разделе специальностей вуза
+    const button2 = document.getElementById('specialties-edit-button');
+    button2.addEventListener('click', () => {
+        edit_mode = 'edit_specialties';
+        presentModal();
+    });
+}
 
 // отображение формы по нажатию на кнопку "добавить" в разделе отзывов
 const button3 = document.getElementById('add-review');

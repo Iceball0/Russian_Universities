@@ -68,65 +68,73 @@
                     <ion-searchbar placeholder="Поиск университетов" id="searchbar"></ion-searchbar>
                 </ion-row>
             </ion-toolbar>
+            {% if message != '' %}
+            <div class="banner">
+                {{ message }}
+                <ion-icon slot="end" class="banner-close" name="close-circle-outline"></ion-icon>
+            </div>
+            {% endif %}
             <ion-title color="primary" class="subtitle bold">ВСЕ УНИВЕРСИТЕТЫ</ion-title>
             <ion-list id="card-list">
                 {% for item in universities %}
-                <ion-card class="card" button onclick="window.location.href = 'universities/{{ item.id }}'">
-                    <ion-row>
-                        <ion-col class="card-col card-image-col">
-                            <img class="card-image" src="{{ url_for('static', filename='images/universities/' + item.image) }}" alt=""/>
-                        </ion-col>
-                        <ion-col class="card-col" id="content">
-                            <ion-card-header class="card-header">
-                                <ion-card-title>{{ item.name }}</ion-card-title>
-                                <ion-card-subtitle>г. {{ item.city }}</ion-card-subtitle>
+                <div id="card_block">
+                    <ion-card class="card" button onclick="window.location.href = 'universities/{{ item.id }}'">
+                        <ion-row>
+                            <ion-col class="card-col card-image-col">
+                                <img class="card-image" src="{{ url_for('static', filename='images/universities/' + item.image) }}" alt=""/>
+                            </ion-col>
+                            <ion-col class="card-col" id="content">
+                                <ion-card-header class="card-header">
+                                    <ion-card-title>{{ item.name }}</ion-card-title>
+                                    <ion-card-subtitle>г. {{ item.city }}</ion-card-subtitle>
 
-                                <div class="university-info-row">
-                                    <ion-row>
-                                        <span class="university-info-row-item">
-                                            <ion-label color="primary">{{ item.placeInRussianTop }}-е место в России</ion-label>
-                                        </span>
-                                        
-                                        {% if ratings[loop.index - 1] %}
-                                        <span class="university-rating">
-                                            {% for i in range(ratings[loop.index - 1]|int) %}
-                                            <ion-icon class="university-stars" name="star"></ion-icon>
-                                            {% endfor %}
-                                            {% if '.' in ratings[loop.index - 1]|string and (ratings[loop.index - 1]|string).split('.')[1] != '0' %}
-                                            <ion-icon class="university-stars" name="star-half-outline"></ion-icon>
+                                    <div class="university-info-row">
+                                        <ion-row>
+                                            <span class="university-info-row-item">
+                                                <ion-label color="primary">{{ item.placeInRussianTop }}-е место в России</ion-label>
+                                            </span>
+                                            
+                                            {% if ratings[loop.index - 1] %}
+                                            <span class="university-rating">
+                                                {% for i in range(ratings[loop.index - 1]|int) %}
+                                                <ion-icon class="university-stars" name="star"></ion-icon>
+                                                {% endfor %}
+                                                {% if '.' in ratings[loop.index - 1]|string and (ratings[loop.index - 1]|string).split('.')[1] != '0' %}
+                                                <ion-icon class="university-stars" name="star-half-outline"></ion-icon>
+                                                {% endif %}
+                                                {% for i in range((5 - ratings[loop.index - 1])|int) %}
+                                                <ion-icon class="university-stars" name="star-outline"></ion-icon>
+                                                {% endfor %}
+                                            </span>
                                             {% endif %}
-                                            {% for i in range((5 - ratings[loop.index - 1])|int) %}
-                                            <ion-icon class="university-stars" name="star-outline"></ion-icon>
-                                            {% endfor %}
-                                        </span>
-                                        {% endif %}
-                                        {% if counts[loop.index - 1] % 10 in [5, 6, 7, 8, 9, 0] or counts[loop.index - 1] in [11, 12, 13, 14, 15, 16, 17, 18, 19] %}
-                                        <span class="university-review-count">{{ counts[loop.index - 1] }} отзывов</span>
-                                        {% elif counts[loop.index - 1] % 10 == 1 %}
-                                        <span class="university-review-count">{{ counts[loop.index - 1] }} отзыв</span>
-                                        {% else %}
-                                        <span class="university-review-count">{{ counts[loop.index - 1] }} отзыва</span>
-                                        {% endif %}
-                                    </ion-row>
-                                </div>
-                            </ion-card-header>
-                            <ion-card-content class="card-desc content-lg">{{ item.description }}</ion-card-content>
-                        </ion-col>
-                    </ion-row>
-                </ion-card>
-                {% if current_user.is_authenticated %}
-                <div class="edit-buttons">
-                    <ion-button color="success" class="edit-button" name="{{ item.id }}">
-                        <ion-icon name="pencil-outline" class="edit-button-icon"></ion-icon>
-                    </ion-button>
-                    <ion-button color="danger" class="delete-button" href="/delete_university/{{ item.id }}">
-                        <ion-icon name="trash-outline" class="delete-button-icon"></ion-icon>
-                    </ion-button>
+                                            {% if counts[loop.index - 1] % 10 in [5, 6, 7, 8, 9, 0] or counts[loop.index - 1] in [11, 12, 13, 14, 15, 16, 17, 18, 19] %}
+                                            <span class="university-review-count">{{ counts[loop.index - 1] }} отзывов</span>
+                                            {% elif counts[loop.index - 1] % 10 == 1 %}
+                                            <span class="university-review-count">{{ counts[loop.index - 1] }} отзыв</span>
+                                            {% else %}
+                                            <span class="university-review-count">{{ counts[loop.index - 1] }} отзыва</span>
+                                            {% endif %}
+                                        </ion-row>
+                                    </div>
+                                </ion-card-header>
+                                <ion-card-content class="card-desc content-lg">{{ item.description }}</ion-card-content>
+                            </ion-col>
+                        </ion-row>
+                    </ion-card>
+                    {% if current_user.permission == 'admin' %}
+                    <div class="edit-buttons">
+                        <ion-button color="success" class="edit-button" name="{{ loop.index }}">
+                            <ion-icon name="pencil-outline" class="edit-button-icon"></ion-icon>
+                        </ion-button>
+                        <ion-button color="danger" class="delete-button" href="/delete_university/{{ item.id }}">
+                            <ion-icon name="trash-outline" class="delete-button-icon"></ion-icon>
+                        </ion-button>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
                 {% endfor %}
             </ion-list>
-            {% if current_user.is_authenticated %}
+            {% if current_user.permission == 'admin' %}
             <ion-button color="success" class="add-button">
                 <ion-icon name="add-circle-outline" slot="start" class="add-button-icon"></ion-icon>
                 <ion-label>
@@ -146,7 +154,7 @@
     </script>
     <script src="{{ url_for('static', filename='js/dark_script.js') }}"></script>
     <script src="{{ url_for('static', filename='js/searchbar_script.js') }}"></script>
-    {% if current_user.is_authenticated %}
+    {% if current_user.permission == 'admin' %}
     <script src="{{ url_for('static', filename='js/universities_modal.js') }}"></script>
     {% endif %}
 </body>
